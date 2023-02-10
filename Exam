@@ -1,0 +1,374 @@
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <time.h>
+#include <algorithm>
+#pragma warning(disable : 4996)
+using namespace std;
+
+class Finance
+{
+	int numbcard;
+	string category;
+	int summ;
+	tm* timet;
+public:
+	void setSumm(int summ)
+	{
+		this->summ = summ;
+	}
+	void setNumbcard(int numbcard)
+	{
+		this->numbcard = numbcard;
+	}
+	void setCategory(string category)
+	{
+		this->category = category;
+	}
+	void setTime()
+	{
+		time_t curtime;
+		time(&curtime);
+		timet = localtime(&curtime);
+	}
+	int getSumm()
+	{
+		return  summ;
+	}
+	int getNumbcard()
+	{
+		return numbcard;
+	}
+	string getCategory()
+	{
+		return category;
+	}
+	tm* getTime() 
+	{
+		return timet;
+	}
+	void Write(string filename) 
+	{
+		ofstream fout(filename, ios::app);
+		fout << numbcard + 1 << ";" << summ << ";" << category << ";" << asctime(timet) << "\n";
+	}
+	
+};
+/*time_t stringToTime(std::string timeString)
+{
+    struct tm tm;
+    std::istringstream ss(timeString);
+    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    time_t time = mktime(&tm);
+    return time;
+}*/ //Не працює функція тому не можливо зробити зчитання
+
+/*void Read(vector<Finance>& spend, string filename)
+{
+	int size = 0;
+	int summ, numbcard;
+	char temp[100];
+	string time, category;
+	Finance tempf;
+
+	ifstream fin(filename, ios::in);
+	if (!fin) cout << "Wrong file\n";
+	else
+	{
+
+		while (fin.getline(temp, 100))
+			size++;
+		fin.close();
+		fin.open(filename, ios::in);
+		for (int i = 0; i < size; i++)
+		{
+			fin.getline(temp, 100);
+			char* token = strtok(temp, ";");numbcard = atoi(token);
+			token = strtok(NULL, ";"); summ = atoi(token);
+			token = strtok(NULL, ";");category = token;
+			token = strtok(NULL, "\n"); time = token;
+			tempf.setCategory(category);
+			tempf.setNumbcard(numbcard);
+			tempf.setSumm(summ);
+			tempf.setTime();
+			spend.push_back(tempf);
+		}
+		fin.close();
+	}
+}*/
+void writeReport(vector<Finance>& spend, string filename)
+{
+	for (int i = 0; i < spend.size(); i++)
+	{
+		spend[i].Write(filename);
+	}
+}
+void SortforTop(vector<Finance>& spend)
+{
+	/*int min = spend[0].getSumm();
+	Finance temp = spend[0];
+	for (int i = 0; i < spend.size() - 1; i++)
+	{
+		int min = i;
+		for (int j = i + 1; j < spend.size(); j++)
+			if (spend[j].getSumm() < spend[min].getSumm())
+				min = j;
+		temp = spend[i];
+		spend[i] = spend[min];
+		spend[min] = temp;
+	}*/
+	string time;
+	int max = spend[0].getSumm();
+	Finance temp = spend[0];
+	for (int i = 0; i < spend.size() - 1; i++)
+	{
+		int max = i;
+		for (int j = i + 1; j < spend.size(); j++)
+			if (spend[j].getSumm() > spend[max].getSumm())
+				max = j;
+		temp = spend[i];
+		spend[i] = spend[max];
+		spend[max] = temp;
+	}
+	for (int i = 0; i < spend.size(); i++)
+	{
+		if (i < 3)
+		{
+			cout << spend[i].getSumm() << " ";
+		}
+		
+	}
+}
+void showAllReport(vector<Finance> spend)
+{
+	for (int i = 0; i < spend.size(); i++)
+	{
+		cout << "#: " << i + 1 << " | Card: " << spend[i].getNumbcard() + 1 << " | Spend: " << spend[i].getSumm() << " | Category: " << spend[i].getCategory() << " | Date: " << asctime(spend[i].getTime()) << "\n";
+	}
+}
+void showReport(vector<Finance> spend)
+{
+	bool job = true;
+	int choose = 0;
+	string filename;
+	while (job)
+	{
+		cout << "Enter your choice\n1-Show all your spends\n2-Show top-3 your spends\n3-Write report\n0-Exit\n";
+		cin >> choose;
+
+		switch (choose)
+		{
+		case 1:
+			showAllReport(spend);
+			break;
+		case 2:
+			SortforTop(spend);
+			break;
+		case 3:
+			cin.ignore();
+			cout << "Enter filename\n";
+			getline(cin, filename);
+			writeReport(spend, filename);
+			break;
+		case 4:
+			filename = "report.txt";
+			//Read(spend,filename);
+			break;
+		case 0:
+			cout << "Back to the main menu\n";
+			return;
+		default:
+			cout << "Wrong Input\n";
+			break;
+		}
+	}
+	
+}
+void showBalance(vector<int>& cards)
+{
+	for (int i = 0; i < cards.size(); i++)	
+	{
+		cout << "#Card: " << i + 1 << " balance: " << cards[i] << "\n";
+	}
+}
+void makeSpend(vector<int>& cards, vector<Finance>& spend)
+{
+	bool need = true, wrong = true;
+	int num, summ;
+	string categ;
+	Finance temp;
+	cout << "What card do you use: ";
+	while (wrong)
+	{
+		cin >> num;
+		if (num > 0 && num <= cards.size())
+		{
+			wrong = false;
+		}
+		else
+			cout << "Wrong input\n";
+	}
+	num = num - 1;
+	cout << "What summ do you spend(0-exit): ";
+	while (need)
+	{
+		cin >> summ;
+		if (summ > 0 && summ <= cards[num])
+		{
+			cards[num] = cards[num] - summ;
+			need = false;
+		}
+		else if (summ >= cards[num] &&  summ != 0)
+		{
+			cout << "There are insufficient funds on the card\n";
+		}
+		else if (summ == 0)
+		{
+			return;
+		}
+	}
+
+	cout << "In which area do you spend it: ";
+	cin.ignore();
+	getline(cin, categ);
+	temp.setCategory(categ);
+	temp.setNumbcard(num);
+	temp.setSumm(summ);
+	temp.setTime();
+	spend.push_back(temp);
+
+}
+
+void topupaccount(vector<int>& mass)
+{
+	int cash, choose;
+	bool job = 1;
+	if (mass.size() == 0)
+	{
+		cout << "Do you want to create card\n1-Yes\n2-No: ";
+		cin >> choose;
+		if (choose == 1)
+		{
+			mass.push_back(0);
+			cout << "Card create!\n";
+		}
+		else if (choose == 2)
+		{
+			cout << "Back to the main menu\n";
+			return;
+		}
+		else
+			cout << "Wrong input!\n";
+	}
+
+	if (mass.size() == 1)
+	{
+		cout << "Enter summ to up: ";
+		cin >> cash;
+		mass[0] += cash;
+		return;
+	}
+	else
+	{
+		choose = 0;
+		while (job)
+		{
+			cout << "What card you want to use (0-exit): ";
+			cin >> choose;
+			if (choose > 0 && choose <= mass.size())
+			{
+				choose -= 1;
+				cout << "Enter summ to up (0-exit): ";
+				cin >> cash;
+				mass[choose] += cash;
+				cout << "You topped up your card number " << choose + 1 << " account by " << cash << endl;
+
+			}
+			else if (choose == 0)
+			{
+				cout << "Thanks for using us, goodbye\n";
+				break;
+			}
+		}
+	}
+}
+
+void writeCard(vector<int> cards)
+{
+	
+	string filename = "Saving.txt";
+	ofstream fout(filename, ios::ate);
+	for (int  i = 0; i < cards.size(); i++)
+	{
+		fout << cards[i] << "\n";
+	}
+	
+}
+void readCard(vector<int>& cards)
+{
+	char temp[100];
+	int size = 0;
+	string filename = "Saving.txt";
+	fstream fin(filename, ios::in);
+	if (!fin) return;
+	else
+	{
+		while (fin.getline(temp, 100))
+			size++;
+		fin.close();
+		fin.open(filename, ios::in);
+		for (int i = 0; i < size; i++)
+		{
+			int cash;
+			fin.getline(temp, 100);
+			char* token = strtok(temp, ";");
+			cash = atoi(token);
+			cards.push_back(cash);
+		}
+		fin.close();
+	}
+}
+int main()
+{
+	
+	vector<int> cards = {};
+	vector<Finance> spend;
+	int choice;
+	bool job = true;
+	readCard(cards);
+	while (job)
+	{
+		if (cards.size() == 0)
+		{
+			cout << "You don't have card. Do you want to create one?\n1-Yes\n2-No\n";
+			cin >> choice;
+			if (choice == 1)
+			{
+				cards.push_back(0);
+				cout << "Card create!\n";
+			}
+			else if (choice == 2)
+			{
+				cout << "Bye!\n";
+				return 0;
+			}
+			else
+				cout << "Wrong input!\n";
+		}
+		else
+		{
+			cout << "Enter your choice\n1-Top up balance\n2-Make spend\n3-Show balance\n4-Reports\n5-Create another card\n0-Exit\n";
+			cin >> choice;
+			if (choice == 1)topupaccount(cards);
+			else if (choice == 2)makeSpend(cards, spend);
+			else if (choice == 3)showBalance(cards);
+			else if (choice == 4)showReport(spend);
+			else if (choice == 5){cards.push_back(0); cout << "Card created! " << "Now you have: " << cards.size() <<"\n";}
+			else if (choice == 0){job = false;writeCard(cards);}
+			else cout << "Wrong choice\n";
+		}	
+
+	}
+}
